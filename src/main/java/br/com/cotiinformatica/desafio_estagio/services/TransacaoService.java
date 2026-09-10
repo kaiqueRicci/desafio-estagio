@@ -1,5 +1,7 @@
 package br.com.cotiinformatica.desafio_estagio.services;
 
+import br.com.cotiinformatica.desafio_estagio.dtos.RelatorioGeralDTO;
+import br.com.cotiinformatica.desafio_estagio.dtos.TotalPessoaDTO;
 import br.com.cotiinformatica.desafio_estagio.entities.Pessoa;
 import br.com.cotiinformatica.desafio_estagio.entities.Transacao;
 import br.com.cotiinformatica.desafio_estagio.enums.TipoTransacao;
@@ -8,6 +10,7 @@ import br.com.cotiinformatica.desafio_estagio.repositories.TransacaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -42,5 +45,58 @@ public class TransacaoService {
 
     public List<Transacao> listar(){
         return transacaoRepository.findAll();
+    }
+
+    //MÉTODO PARA GERAR O RELATÓRIO DE TOTAIS
+    public RelatorioGeralDTO gerarRelatoriosTotais(){
+        List<Pessoa> pessoas = pessoaRepository.findAll();
+
+        // Mapeia cada pessoa para o TotalPessoaDTO
+        List<TotalPessoaDTO> totaisPessoas = pessoas.stream().map(pessoa -> {
+
+            // Soma as receitas da pessoa
+            BigDecimal totalReceitas = pessoa.getTransacoes().stream()
+                    .filter(t -> t.getTipo() == TipoTransacao.RECEITA)
+                    .map(Transacao::getValor)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Soma as despesas da pessoa
+            BigDecimal totalDespesas = pessoa.getTransacoes().stream()
+                    .filter(t -> t.getTipo() == TipoTransacao.DESPESA)
+                    .map(Transacao::getValor)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            // Calcula o saldo individual (Receitas - Despesas)
+            BigDecimal saldo = totalReceitas.subtract(totalDespesas);
+
+            // Retorna o DTO preenchido
+            return new TotalPessoaDTO(
+                    pessoa.getId(),
+                    pessoa.getNome(),
+                    pessoa.getIdade(),
+                    totalReceitas,
+                    totalDespesas,
+                    saldo
+            );
+        }).toList();
+
+        //  Calcula os totais gerais somando todos os DTOs individuais
+        BigDecimal geralReceitas = totaisPessoas.stream()
+                .map(TotalPessoaDTO::getTotalReceitas)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal geralDespesas = totaisPessoas.stream()
+                .map(TotalPessoaDTO::getTotalDespesas)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal saldoLiquidoGeral = geralReceitas.subtract(geralDespesas);
+
+        //  Retorna o relatório geral completo
+        return new RelatorioGeralDTO(
+                totaisPessoas,
+                geralReceitas,
+                geralDespesas,
+                saldoLiquidoGeral
+        );
     }
 }
