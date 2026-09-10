@@ -13,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/pessoas")
+@CrossOrigin(origins = "*")
 public class PessoaController {
 
     @Autowired
