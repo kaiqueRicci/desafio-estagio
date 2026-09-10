@@ -1,6 +1,7 @@
 package br.com.cotiinformatica.desafio_estagio.entities;
 
 import br.com.cotiinformatica.desafio_estagio.enums.TipoTransacao;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class Transacao {
     @Enumerated(EnumType.STRING)
     private TipoTransacao tipo;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "pessoa_id")
     private Pessoa pessoa;

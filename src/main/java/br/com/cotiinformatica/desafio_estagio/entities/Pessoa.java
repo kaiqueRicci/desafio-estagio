@@ -1,5 +1,6 @@
 package br.com.cotiinformatica.desafio_estagio.entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class Pessoa {
     private String nome;
     private Integer idade;
 
-    @OneToMany(mappedBy = "pessoa", cascade = CascadeType.REMOVE)
+    @JsonManagedReference
+    @OneToMany(mappedBy = "pessoa", cascade = CascadeType.ALL)
     private List<Transacao> transacoes;
 }
